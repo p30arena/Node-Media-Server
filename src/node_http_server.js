@@ -66,15 +66,20 @@ class NodeHttpServer {
     }
 
     app.use(Express.static(path.join(__dirname + '/public')));
-    app.use(Express.static(this.mediaroot), (req, res, next) => {
+    app.use(Express.static(this.mediaroot));
+    if (config.http.webroot) {
+      app.use(Express.static(config.http.webroot));
+    }
+
+    app.use((req, res, next) => {
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
       console.log(res.statusCode, req.path, fullUrl);
 
-      if (res.statusCode === 404) {
+      if (res.statusCode == 404) {
         console.log('not found', res.statusCode, req.path, fullUrl);
       }
 
-      if (res.statusCode === 404 && req.path.endsWith('.m3u8')) {
+      if (res.statusCode == 404 && req.path.endsWith('/index.m3u8')) {
         promisify(Fs.readdir(path.join(this.mediaroot, req.path.replace('/index.m3u8', ''))))
           .then(r => console.log(r));
         // res.redirect(fullUrl.replace('index.m3u8', 'XXX.mp4'));
@@ -82,9 +87,6 @@ class NodeHttpServer {
 
       next();
     });
-    if (config.http.webroot) {
-      app.use(Express.static(config.http.webroot));
-    }
 
     this.httpServer = Http.createServer(app);
 

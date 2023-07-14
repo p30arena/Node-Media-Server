@@ -75,9 +75,9 @@ class NodeHttpServer {
       }
 
       if (res.statusCode === 404 && req.path.endsWith('.m3u8')) {
-        promisify(Fs.readdir(path.join(this.mediaroot, req.path.replace(/\/.+\.m3u8/, ''))))
+        promisify(Fs.readdir(path.join(this.mediaroot, req.path.replace('/index.m3u8', ''))))
           .then(r => console.log(r));
-        // res.redirect(fullUrl.replace('.m3u8'));
+        // res.redirect(fullUrl.replace('index.m3u8', 'XXX.mp4'));
       }
 
       next();

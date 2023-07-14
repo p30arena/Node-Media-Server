@@ -19,6 +19,7 @@ const HTTPS_PORT = 443;
 const HTTP_MEDIAROOT = './media';
 const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
+const { promisify } = require('util');
 
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
@@ -65,7 +66,20 @@ class NodeHttpServer {
     }
 
     app.use(Express.static(path.join(__dirname + '/public')));
-    app.use(Express.static(this.mediaroot));
+    app.use(Express.static(this.mediaroot), (req, res, next) => {
+      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+      if (res.statusCode === 404) {
+        console.log('not found', res.statusCode, req.path, fullUrl);
+      }
+
+      if (res.statusCode === 404 && req.path.endsWith('.m3u8')) {
+        promisify(Fs.readdir(path.join(this.mediaroot, req.path.replace(/\/.+\.m3u8/, ''))))
+          .then(r => console.log(r));
+        // res.redirect(fullUrl.replace('.m3u8'));
+      }
+
+      next();
+    });
     if (config.http.webroot) {
       app.use(Express.static(config.http.webroot));
     }

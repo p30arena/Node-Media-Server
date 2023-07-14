@@ -82,9 +82,11 @@ class NodeHttpServer {
 
         const files = await promisify(Fs.readdir)(path.join(this.mediaroot, req_path_clean))
         const mp4Files = files.filter(s => s.endsWith('.mp4'));
-        const fullPathMp4Files = mp4Files.map(m => path.join(req_path_clean, m));
-        console.log(fullPathMp4Files);
-        // res.redirect(fullUrl.replace('index.m3u8', 'XXX.mp4'));
+        if (mp4Files.length) {
+          res.redirect(fullUrl.replace('index.m3u8', mp4Files[0]));
+        }
+        // const fullPathMp4Files = mp4Files.map(m => path.join(req_path_clean, m));
+        // console.log(fullPathMp4Files);
       } finally {
         next();
       }

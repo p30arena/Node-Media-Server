@@ -68,6 +68,8 @@ class NodeHttpServer {
     app.use(Express.static(path.join(__dirname + '/public')));
     app.use(Express.static(this.mediaroot), (req, res, next) => {
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+      console.log(res.statusCode, req.path, fullUrl);
+
       if (res.statusCode === 404) {
         console.log('not found', res.statusCode, req.path, fullUrl);
       }

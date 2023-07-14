@@ -66,27 +66,29 @@ class NodeHttpServer {
     }
 
     app.use(Express.static(path.join(__dirname + '/public')));
-    app.use(Express.static(this.mediaroot));
+    app.use(async (req, res, next) => {
+      if (!req.path.endsWith('/index.m3u8')) {
+        return next();
+      }
+
+      try {
+        await promisify(Fs.access)(path.join(this.mediaroot, req.path));
+      } catch (e) {
+        console.log(e.message);
+
+        const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+        console.log(res.statusCode, req.path, fullUrl);
+
+        const files = await promisify(Fs.readdir)(path.join(this.mediaroot, req.path.replace('/index.m3u8', '')))
+        console.log(files);
+        // res.redirect(fullUrl.replace('index.m3u8', 'XXX.mp4'));
+      } finally {
+        next();
+      }
+    }, Express.static(this.mediaroot));
     if (config.http.webroot) {
       app.use(Express.static(config.http.webroot));
     }
-
-    app.use((req, res, next) => {
-      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-      console.log(res.statusCode, req.path, fullUrl);
-
-      if (res.statusCode == 404) {
-        console.log('not found', res.statusCode, req.path, fullUrl);
-      }
-
-      if (res.statusCode == 404 && req.path.endsWith('/index.m3u8')) {
-        promisify(Fs.readdir(path.join(this.mediaroot, req.path.replace('/index.m3u8', ''))))
-          .then(r => console.log(r));
-        // res.redirect(fullUrl.replace('index.m3u8', 'XXX.mp4'));
-      }
-
-      next();
-    });
 
     this.httpServer = Http.createServer(app);
 

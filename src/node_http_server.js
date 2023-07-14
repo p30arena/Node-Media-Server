@@ -74,13 +74,16 @@ class NodeHttpServer {
       try {
         await promisify(Fs.access)(path.join(this.mediaroot, req.path));
       } catch (e) {
-        console.log(e.message);
+        // console.log(e.message);
 
+        const req_path_clean = req.path.replace('/index.m3u8', '');
         const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
         console.log(res.statusCode, req.path, fullUrl);
 
-        const files = await promisify(Fs.readdir)(path.join(this.mediaroot, req.path.replace('/index.m3u8', '')))
-        console.log(files);
+        const files = await promisify(Fs.readdir)(path.join(this.mediaroot, req_path_clean))
+        const mp4Files = files.filter(s => s.endsWith('.mp4'));
+        const fullPathMp4Files = mp4Files.map(m => path.join(req_path_clean, m));
+        console.log(fullPathMp4Files);
         // res.redirect(fullUrl.replace('index.m3u8', 'XXX.mp4'));
       } finally {
         next();
